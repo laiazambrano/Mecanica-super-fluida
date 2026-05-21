@@ -5,7 +5,7 @@ from velocity_pressure_cp import *
 from downforce import *
 
 x,y,X,Y,dx,dy=mesh()
-fluid_limit,solid_limit,h,front_wheel, rear_wheel=apply_height(X,Y)
+fluid_limit,solid_limit,h,front_wheel, rear_wheel,airfoil_mask=apply_height(X,Y)
 
 ###Tunnel geometry plot
 plt.figure(figsize=(10,3))
@@ -21,8 +21,8 @@ print(height(1.32))
 
 ###creation of the stream function with boundary conditions
 sf=stream_function(Y,h)
-sf_boundary=boundary_conditions(sf,Y,h,fluid_limit, front_wheel,rear_wheel)
-sf_final=laplace(sf_boundary, fluid_limit,max_iter,tolerance,Y,h,front_wheel,rear_wheel)
+sf_boundary=boundary_conditions(sf,Y,h,fluid_limit, front_wheel,rear_wheel,airfoil_mask)
+sf_final=laplace(sf_boundary, fluid_limit,max_iter,tolerance,Y,h,front_wheel,rear_wheel,airfoil_mask)
 
 ###Plot of the streamlines
 plt.figure(figsize=(10,3))

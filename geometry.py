@@ -44,9 +44,15 @@ def apply_height(X,Y):
     rear_wheel = ((X - xwr) ** 2 + (Y - yw) ** 2) <= R ** 2
     #fluid below tunnel upper limit
     fluid_limit=Y<=h
+
+    perfil = Path(
+        np.column_stack([x_rot, y_rot]))  # funcion path crea un poligono cerrado (se le ponen ya en formato punto)
+    puntos = np.column_stack([X.ravel(), Y.ravel()])  # como X y Y son matrices se tienen que poner en fila
+    airfoil_mask = perfil.contains_points(puntos).reshape(Y.shape)  # solido parte interior
+
     #fluid above tunnel upper limit
     solid_limit = (Y > h)
-    solid_limit = solid_limit | front_wheel | rear_wheel
+    solid_limit = solid_limit | front_wheel | rear_wheel|airfoil_mask
     fluid_limit = ~solid_limit
 
-    return fluid_limit,solid_limit,h,front_wheel, rear_wheel
+    return fluid_limit,solid_limit,h,front_wheel, rear_wheel, airfoil_mask

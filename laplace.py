@@ -10,7 +10,7 @@ def stream_function(Y,h):
 
 #boundary conditions
 #ground: sf=0
-def boundary_conditions(sf,Y,h,fluid_limit, front_wheel, rear_wheel):
+def boundary_conditions(sf,Y,h,fluid_limit, front_wheel, rear_wheel, airfoil_mask):
     Ny,Nx=sf.shape
     sf[0,:]=0
     #inlet: sf=U0*Y
@@ -20,6 +20,14 @@ def boundary_conditions(sf,Y,h,fluid_limit, front_wheel, rear_wheel):
     #outlet: d(sf)/dx=0
     sf[:,-1]=sf[:,-2]
     #sf_top=U0*hin
+
+    # airfoil: solid obstacle, approximate constant streamline
+    airfoil_indices = np.where(airfoil_mask)
+    if len(airfoil_indices[0]) > 0:
+        y_airfoil_mean = np.mean(Y[airfoil_mask])
+        sf_airfoil = U0 * y_airfoil_mean
+        sf[airfoil_mask] = sf_airfoil
+
     #upper wall of the tunnel
     for i in range(Nx):
     #to find the fluid points in this vertical column
@@ -32,14 +40,14 @@ def boundary_conditions(sf,Y,h,fluid_limit, front_wheel, rear_wheel):
     sf[rear_wheel] = 0
 
     # other solid parts, but NOT the wheels
-    other_solid = (~fluid_limit) & (~front_wheel) & (~rear_wheel)
+    other_solid = (~fluid_limit) & (~front_wheel) & (~rear_wheel) & (~airfoil_mask)
     sf[other_solid] = np.nan
 
     return sf
 
 
 #applying Laplace
-def laplace(sf,fluid_limit,max_iter,tolerance,Y,h, front_wheel, rear_wheel):
+def laplace(sf,fluid_limit,max_iter,tolerance,Y,h, front_wheel, rear_wheel,airfoil_mask):
     Ny,Nx=sf.shape
     for ite in range(max_iter):
         sf_old=sf.copy()
@@ -58,7 +66,7 @@ def laplace(sf,fluid_limit,max_iter,tolerance,Y,h, front_wheel, rear_wheel):
                     ]
                     if len(valid_neighbors)>0:
                         sf[j,i]=np.mean(valid_neighbors)
-        sf = boundary_conditions(sf,Y,h,fluid_limit,front_wheel,rear_wheel)
+        sf = boundary_conditions(sf,Y,h,fluid_limit,front_wheel,rear_wheel, airfoil_mask)
         error = np.nanmax(np.abs(sf-sf_old))
         if error<tolerance:
             print(f"Converged after {ite} iterations")
